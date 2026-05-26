@@ -1,0 +1,71 @@
+import random
+import time
+
+class JogoDino:
+    def __init__(self):
+        self.dino_y = 0  # 0 = chão, >0 = pulando
+        self.obstaculo_x = random.randint(20, 30)
+        self.velocidade = 1
+        self.pontos = 0
+        self.vivo = True
+
+    def atualizar(self):
+        # mover obstáculo
+        self.obstaculo_x -= self.velocidade
+
+        # gravidade
+        if self.dino_y > 0:
+            self.dino_y -= 1
+
+        # reset obstáculo
+        if self.obstaculo_x <= 0:
+            self.obstaculo_x = random.randint(20, 30)
+            self.velocidade += 0.1
+
+        # colisão
+        if self.obstaculo_x <= 1 and self.dino_y == 0:
+            self.vivo = False
+
+        self.pontos += 1
+
+
+class AgenteDino:
+    def decidir(self, estado):
+        distancia, altura, velocidade = estado
+
+        # regra simples (algoritmo genérico)
+        if distancia < 5 and altura == 0:
+            return "PULAR"
+        return "NADA"
+
+
+def main():
+    print("=== DINO IA ===\n")
+
+    jogo = JogoDino()
+    agente = AgenteDino()
+
+    passo = 0
+
+    while jogo.vivo:
+        passo += 1
+
+        estado = (jogo.obstaculo_x, jogo.dino_y, jogo.velocidade)
+        acao = agente.decidir(estado)
+
+        print(f"Passo {passo} | Distância: {estado[0]:.2f} | Altura: {estado[1]} | Velocidade: {estado[2]:.2f}")
+        print("Ação:", acao)
+
+        if acao == "PULAR" and jogo.dino_y == 0:
+            jogo.dino_y = 3  # altura do pulo
+
+        jogo.atualizar()
+
+        time.sleep(0.1)
+
+    print("\n💀 GAME OVER")
+    print(f"Pontuação: {jogo.pontos}")
+
+
+if __name__ == "__main__":
+    main()
