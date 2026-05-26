@@ -1,0 +1,113 @@
+import random
+
+TAM = 4
+
+class Mundo:
+    def __init__(self):
+        self.agente = (0, 0)
+        self.ouro = self.rand_pos([(0,0)])
+        self.wumpus = self.rand_pos([(0,0), self.ouro])
+        self.pocos = [self.rand_pos([(0,0), self.ouro, self.wumpus]) for _ in range(3)]
+        self.vivo = True
+        self.venceu = False
+
+    def rand_pos(self, excluir):
+        while True:
+            p = (random.randint(0,3), random.randint(0,3))
+            if p not in excluir:
+                return p
+
+    def adj(self, pos):
+        x,y = pos
+        poss = [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]
+        return [(i,j) for i,j in poss if 0 <= i < 4 and 0 <= j < 4]
+
+    def percepcao(self, pos):
+        percep = []
+        for a in self.adj(pos):
+            if a == self.wumpus:
+                percep.append("F")
+            if a in self.pocos:
+                percep.append("B")
+
+        if pos == self.ouro:
+            percep.append("G")
+
+        return percep
+
+
+class AgenteKB:
+    def __init__(self):
+        self.kb = set()
+        self.visitados = set()
+        self.seguros = set([(0,0)])
+
+    def atualizar_kb(self, pos, percepcao, mundo):
+        self.visitados.add(pos)
+
+        if "B" not in percepcao:
+            for a in mundo.adj(pos):
+                self.kb.add(f"~P{a}")
+                self.seguros.add(a)
+
+        if "F" not in percepcao:
+            for a in mundo.adj(pos):
+                self.kb.add(f"~W{a}")
+                self.seguros.add(a)
+
+    def decidir(self, pos, mundo):
+        for a in mundo.adj(pos):
+            if a in self.seguros and a not in self.visitados:
+                return a
+
+        # fallback: movimento aleatório
+        return random.choice(mundo.adj(pos))
+
+
+def main():
+    print("=== WUMPUS COM LÓGICA PROPOSICIONAL ===\n")
+
+    mundo = Mundo()
+    agente = AgenteKB()
+
+    pos = (0,0)
+    passos = 0
+
+    while mundo.vivo and not mundo.venceu:
+        passos += 1
+        print(f"\nPasso {passos}")
+        print("Posição:", pos)
+
+        percep = mundo.percepcao(pos)
+        print("Percepção:", percep if percep else ["Nada"])
+
+        agente.atualizar_kb(pos, percep, mundo)
+
+        print("KB:", agente.kb)
+        print("Seguros:", agente.seguros)
+
+        if "G" in percep:
+            print("OURO ENCONTRADO!")
+            break
+
+        prox = agente.decidir(pos, mundo)
+        print("Movendo para:", prox)
+
+        pos = prox
+
+        if pos == mundo.wumpus or pos in mundo.pocos:
+            mundo.vivo = False
+        elif pos == mundo.ouro:
+            mundo.venceu = True
+
+    print("\n=== RESULTADO ===")
+    if mundo.venceu:
+        print("Vitória! 🏆")
+    else:
+        print("Morreu 💀")
+
+    print(f"Passos: {passos}")
+
+
+if __name__ == "__main__":
+    main()
