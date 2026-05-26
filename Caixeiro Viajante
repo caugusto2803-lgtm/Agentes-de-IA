@@ -1,0 +1,98 @@
+import random
+import time
+
+class TSPAgent:
+    def __init__(self, cidades, matriz_distancias):
+        self.cidades = cidades
+        self.distancias = matriz_distancias
+        self.n = len(cidades)
+        self.estados_visitados = 0
+
+    def distancia(self, i, j):
+        return self.distancias[i][j]
+
+    def calcular_custo(self, caminho):
+        custo = 0
+        for i in range(len(caminho) - 1):
+            custo += self.distancia(caminho[i], caminho[i + 1])
+        # voltar à cidade inicial
+        custo += self.distancia(caminho[-1], caminho[0])
+        return custo
+
+    def busca_gulosa(self):
+        inicio = random.randint(0, self.n - 1)
+        nao_visitadas = list(range(self.n))
+        nao_visitadas.remove(inicio)
+
+        caminho = [inicio]
+        atual = inicio
+
+        while nao_visitadas:
+            self.estados_visitados += 1
+
+            # Ordena cidades por distância (heurística gulosa)
+            candidatos = sorted(nao_visitadas, key=lambda x: self.distancia(atual, x))
+
+            # Introduz aleatoriedade (escolhe entre os 3 melhores)
+            k = min(3, len(candidatos))
+            proxima = random.choice(candidatos[:k])
+
+            caminho.append(proxima)
+            nao_visitadas.remove(proxima)
+            atual = proxima
+
+        return caminho
+
+    def resolver(self):
+        inicio_tempo = time.time()
+
+        caminho = self.busca_gulosa()
+        custo = self.calcular_custo(caminho)
+
+        fim_tempo = time.time()
+
+        return {
+            "caminho": caminho,
+            "custo": custo,
+            "estados": self.estados_visitados,
+            "tempo": fim_tempo - inicio_tempo
+        }
+
+
+# =============================
+# EXEMPLO DE USO
+# =============================
+
+def gerar_matriz_aleatoria(n, max_dist=100):
+    matriz = [[0]*n for _ in range(n)]
+    for i in range(n):
+        for j in range(i+1, n):
+            valor = random.randint(10, max_dist)
+            matriz[i][j] = valor
+            matriz[j][i] = valor
+    return matriz
+
+
+if __name__ == "__main__":
+    # Lista de cidades
+    cidades = ["A", "B", "C", "D", "E", "F"]
+
+    # Gerar matriz de distâncias
+    matriz = gerar_matriz_aleatoria(len(cidades))
+
+    agente = TSPAgent(cidades, matriz)
+    resultado = agente.resolver()
+
+    print("\n=== RESULTADO ===")
+    print("Caminho encontrado:")
+    for i in resultado["caminho"]:
+        print(cidades[i], end=" -> ")
+    print(cidades[resultado["caminho"][0]])  # volta ao início
+
+    print(f"\nCusto total: {resultado['custo']}")
+    print(f"Estados visitados: {resultado['estados']}")
+    print(f"Tempo de execução: {resultado['tempo']:.6f} segundos")
+
+    print("\n=== MATRIZ DE DISTÂNCIAS ===")
+    for linha in matriz:
+        print(linha)
