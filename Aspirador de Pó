@@ -1,0 +1,124 @@
+import random
+from collections import deque
+
+# Representação do estado:
+# (posição, esquerda_suja, direita_suja)
+# posição: 0 = esquerda | 1 = direita
+# sujeira: 1 = sujo | 0 = limpo
+
+class VacuumAgent:
+    def __init__(self, estado_inicial):
+        self.estado_inicial = estado_inicial
+        self.estados_visitados = 0
+
+    def objetivo(self, estado):
+        return estado[1] == 0 and estado[2] == 0
+
+    def acoes(self, estado):
+        return ["ESQUERDA", "DIREITA", "ASPIRAR"]
+
+    def transicao(self, estado, acao):
+        pos, esq, dir = estado
+
+        if acao == "ESQUERDA":
+            if pos == 1:
+                return (0, esq, dir)
+            return estado
+
+        elif acao == "DIREITA":
+            if pos == 0:
+                return (1, esq, dir)
+            return estado
+
+        elif acao == "ASPIRAR":
+            if pos == 0:
+                esq = 0
+            else:
+                dir = 0
+            return (pos, esq, dir)
+
+    def bfs(self):
+        fila = deque()
+        fila.append((self.estado_inicial, [], []))  # estado, ações, histórico
+        visitados = set()
+
+        while fila:
+            estado, caminho, historico = fila.popleft()
+            self.estados_visitados += 1
+
+            if estado in visitados:
+                continue
+            visitados.add(estado)
+
+            historico = historico + [estado]
+
+            if self.objetivo(estado):
+                return caminho, historico
+
+            for acao in self.acoes(estado):
+                novo_estado = self.transicao(estado, acao)
+                fila.append((novo_estado, caminho + [acao], historico))
+
+        return None, None
+
+
+# =============================
+# FUNÇÕES INTERATIVAS
+# =============================
+
+def gerar_estado_aleatorio():
+    pos = random.randint(0, 1)
+    esq = random.randint(0, 1)
+    dir = random.randint(0, 1)
+    return (pos, esq, dir)
+
+
+def mostrar_estado(estado):
+    pos, esq, dir = estado
+    pos_str = "Esquerda" if pos == 0 else "Direita"
+    return f"[Agente: {pos_str} | Esq: {'Sujo' if esq else 'Limpo'} | Dir: {'Sujo' if dir else 'Limpo'}]"
+
+
+def main():
+    print("=== AGENTE ASPIRADOR DE PÓ ===\n")
+
+    print("Escolha o tipo de estado inicial:")
+    print("1 - Aleatório")
+    print("2 - Definir manualmente")
+
+    opcao = input("Opção: ")
+
+    if opcao == "1":
+        estado_inicial = gerar_estado_aleatorio()
+    else:
+        pos = int(input("Posição do agente (0 = esquerda, 1 = direita): "))
+        esq = int(input("Esquerda está suja? (1 = sim, 0 = não): "))
+        dir = int(input("Direita está suja? (1 = sim, 0 = não): "))
+        estado_inicial = (pos, esq, dir)
+
+    agente = VacuumAgent(estado_inicial)
+
+    print("\nEstado inicial:")
+    print(mostrar_estado(estado_inicial))
+
+    caminho, historico = agente.bfs()
+
+    print("\n=== RESULTADO ===")
+
+    if caminho:
+        print("\nSequência de ações:")
+        for acao in caminho:
+            print(acao)
+
+        print("\nEstados percorridos:")
+        for estado in historico:
+            print(mostrar_estado(estado))
+
+        print(f"\nCusto total: {len(caminho)}")
+        print(f"Estados visitados: {agente.estados_visitados}")
+    else:
+        print("Nenhuma solução encontrada.")
+
+
+if __name__ == "__main__":
+    main()
