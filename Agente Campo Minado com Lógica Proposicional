@@ -1,0 +1,110 @@
+import random
+
+TAM = 5
+MINAS = 5
+
+class CampoMinado:
+    def __init__(self):
+        self.tabuleiro = [[0]*TAM for _ in range(TAM)]
+        self.minas = set()
+
+        while len(self.minas) < MINAS:
+            pos = (random.randint(0, TAM-1), random.randint(0, TAM-1))
+            self.minas.add(pos)
+
+        for (x,y) in self.minas:
+            for i in range(x-1, x+2):
+                for j in range(y-1, y+2):
+                    if 0 <= i < TAM and 0 <= j < TAM:
+                        self.tabuleiro[i][j] += 1
+
+    def revelar(self, pos):
+        if pos in self.minas:
+            return "MINA"
+        return self.tabuleiro[pos[0]][pos[1]]
+
+    def adj(self, pos):
+        x,y = pos
+        return [(i,j) for i in range(x-1,x+2) for j in range(y-1,y+2)
+                if 0 <= i < TAM and 0 <= j < TAM and (i,j)!=pos]
+
+
+class Agente:
+    def __init__(self):
+        self.kb = {}
+        self.seguras = set()
+        self.minas = set()
+        self.visitadas = set()
+
+    def atualizar(self, pos, valor, campo):
+        self.visitadas.add(pos)
+        self.kb[pos] = valor
+
+        vizinhos = campo.adj(pos)
+        desconhecidos = [v for v in vizinhos if v not in self.visitadas and v not in self.minas]
+
+        # Regra 1: se valor == minas ao redor → resto seguro
+        if valor == len([v for v in vizinhos if v in self.minas]):
+            for v in desconhecidos:
+                self.seguras.add(v)
+
+        # Regra 2: se valor == desconhecidos → todos são minas
+        if valor == len(desconhecidos):
+            for v in desconhecidos:
+                self.minas.add(v)
+
+    def decidir(self):
+        for s in self.seguras:
+            if s not in self.visitadas:
+                return s
+
+        # fallback aleatório
+        return (random.randint(0, TAM-1), random.randint(0, TAM-1))
+
+
+def mostrar(campo, agente):
+    for i in range(TAM):
+        linha = []
+        for j in range(TAM):
+            if (i,j) in agente.visitadas:
+                linha.append(str(campo.tabuleiro[i][j]))
+            else:
+                linha.append("?")
+        print(" ".join(linha))
+    print()
+
+
+def main():
+    print("=== CAMPO MINADO COM IA ===\n")
+
+    campo = CampoMinado()
+    agente = Agente()
+
+    jogadas = 0
+
+    while True:
+        pos = agente.decidir()
+        jogadas += 1
+
+        print(f"Jogada {jogadas}: {pos}")
+
+        resultado = campo.revelar(pos)
+
+        if resultado == "MINA":
+            print("💥 BOOM! Você perdeu.")
+            break
+
+        agente.atualizar(pos, resultado, campo)
+
+        mostrar(campo, agente)
+
+        print("Seguras:", agente.seguras)
+        print("Minas inferidas:", agente.minas)
+
+        if len(agente.visitadas) == (TAM*TAM - MINAS):
+            print("🏆 Vitória!")
+            break
+
+
+if __name__ == "__main__":
+    main()
