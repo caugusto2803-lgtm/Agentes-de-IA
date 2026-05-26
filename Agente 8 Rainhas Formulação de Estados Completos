@@ -1,0 +1,92 @@
+import random
+import time
+
+class RainhasEstadosCompletos:
+    def __init__(self, n=8):
+        self.n = n
+        self.estado = [random.randint(0, n-1) for _ in range(n)]
+        self.estados_visitados = 0
+
+    def conflitos(self, estado):
+        conflitos = 0
+        for i in range(self.n):
+            for j in range(i+1, self.n):
+                if estado[i] == estado[j] or \
+                   abs(estado[i] - estado[j]) == abs(i - j):
+                    conflitos += 1
+        return conflitos
+
+    def gerar_vizinhos(self, estado):
+        vizinhos = []
+        for col in range(self.n):
+            for linha in range(self.n):
+                if estado[col] != linha:
+                    novo = estado.copy()
+                    novo[col] = linha
+                    vizinhos.append(novo)
+        return vizinhos
+
+    def hill_climbing(self):
+        atual = self.estado
+
+        while True:
+            self.estados_visitados += 1
+            atual_conflitos = self.conflitos(atual)
+
+            if atual_conflitos == 0:
+                return atual
+
+            vizinhos = self.gerar_vizinhos(atual)
+            melhor = atual
+            melhor_conflito = atual_conflitos
+
+            for v in vizinhos:
+                c = self.conflitos(v)
+                if c < melhor_conflito:
+                    melhor = v
+                    melhor_conflito = c
+
+            if melhor_conflito >= atual_conflitos:
+                return None  # mínimo local
+
+            atual = melhor
+
+    def resolver(self):
+        inicio = time.time()
+
+        while True:
+            resultado = self.hill_climbing()
+            if resultado:
+                fim = time.time()
+                return resultado, fim - inicio
+            else:
+                # random restart
+                self.estado = [random.randint(0, self.n-1) for _ in range(self.n)]
+
+    def imprimir(self, estado):
+        for linha in range(self.n):
+            for col in range(self.n):
+                if estado[col] == linha:
+                    print("Q", end=" ")
+                else:
+                    print(".", end=" ")
+            print()
+
+
+def main():
+    print("=== 8 RAINHAS - ESTADOS COMPLETOS ===\n")
+
+    n = int(input("Tamanho do tabuleiro (ex: 8): "))
+
+    agente = RainhasEstadosCompletos(n)
+    solucao, tempo = agente.resolver()
+
+    print("\n=== RESULTADO ===")
+    agente.imprimir(solucao)
+    print(f"\nConflitos: 0")
+    print(f"Estados visitados: {agente.estados_visitados}")
+    print(f"Tempo: {tempo:.6f}s")
+
+
+if __name__ == "__main__":
+    main()
