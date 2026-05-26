@@ -1,0 +1,75 @@
+import random
+import time
+
+class Ambiente:
+    def __init__(self):
+        # 0 = limpo | 1 = sujo
+        self.estado = {
+            "A": random.randint(0, 1),
+            "B": random.randint(0, 1)
+        }
+        self.posicao_agente = random.choice(["A", "B"])
+
+    def esta_limpo(self):
+        return self.estado["A"] == 0 and self.estado["B"] == 0
+
+    def mostrar(self):
+        print(f"[A: {'Sujo' if self.estado['A'] else 'Limpo'} | "
+              f"B: {'Sujo' if self.estado['B'] else 'Limpo'} | "
+              f"Agente: {self.posicao_agente}]")
+
+    def aspirar(self):
+        self.estado[self.posicao_agente] = 0
+
+    def mover(self):
+        if self.posicao_agente == "A":
+            self.posicao_agente = "B"
+        else:
+            self.posicao_agente = "A"
+
+
+class AgenteReativoSimples:
+    def __init__(self, ambiente):
+        self.ambiente = ambiente
+        self.acoes = 0
+
+    def agir(self):
+        pos = self.ambiente.posicao_agente
+
+        # percepção local
+        if self.ambiente.estado[pos] == 1:
+            print("Ação: ASPIRAR")
+            self.ambiente.aspirar()
+        else:
+            print("Ação: MOVER")
+            self.ambiente.mover()
+
+        self.acoes += 1
+
+
+def main():
+    print("=== ASPIRADOR REATIVO SIMPLES ===\n")
+
+    ambiente = Ambiente()
+    agente = AgenteReativoSimples(ambiente)
+
+    print("Estado inicial:")
+    ambiente.mostrar()
+    print()
+
+    passo = 1
+
+    while not ambiente.esta_limpo():
+        print(f"Passo {passo}:")
+        agente.agir()
+        ambiente.mostrar()
+        print()
+        passo += 1
+        time.sleep(0.5)  # só pra visualização
+
+    print("=== AMBIENTE LIMPO ===")
+    print(f"Total de ações: {agente.acoes}")
+
+
+if __name__ == "__main__":
+    main()
