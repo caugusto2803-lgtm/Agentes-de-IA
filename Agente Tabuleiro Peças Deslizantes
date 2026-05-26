@@ -1,0 +1,138 @@
+import random
+import time
+from collections import deque
+
+OBJETIVO = (1, 2, 3,
+            4, 5, 6,
+            7, 8, 0)
+
+MOVIMENTOS = {
+    "CIMA": -3,
+    "BAIXO": 3,
+    "ESQUERDA": -1,
+    "DIREITA": 1
+}
+
+
+def imprimir(estado):
+    for i in range(0, 9, 3):
+        linha = estado[i:i+3]
+        print(" ".join(str(x) if x != 0 else "_" for x in linha))
+    print()
+
+
+def gerar_estado_valido(passos=20):
+    estado = list(OBJETIVO)
+    zero = estado.index(0)
+
+    for _ in range(passos):
+        movimentos_validos = []
+
+        if zero >= 3:
+            movimentos_validos.append(-3)
+        if zero <= 5:
+            movimentos_validos.append(3)
+        if zero % 3 != 0:
+            movimentos_validos.append(-1)
+        if zero % 3 != 2:
+            movimentos_validos.append(1)
+
+        movimento = random.choice(movimentos_validos)
+        novo_zero = zero + movimento
+
+        estado[zero], estado[novo_zero] = estado[novo_zero], estado[zero]
+        zero = novo_zero
+
+    return tuple(estado)
+
+
+def vizinhos(estado):
+    zero = estado.index(0)
+    viz = []
+
+    if zero >= 3:
+        viz.append(("CIMA", zero, zero-3))
+    if zero <= 5:
+        viz.append(("BAIXO", zero, zero+3))
+    if zero % 3 != 0:
+        viz.append(("ESQUERDA", zero, zero-1))
+    if zero % 3 != 2:
+        viz.append(("DIREITA", zero, zero+1))
+
+    resultado = []
+
+    for acao, i, j in viz:
+        novo = list(estado)
+        novo[i], novo[j] = novo[j], novo[i]
+        resultado.append((acao, tuple(novo)))
+
+    return resultado
+
+
+def bfs(inicial):
+    fila = deque()
+    fila.append((inicial, [], []))
+    visitados = set()
+
+    estados_visitados = 0
+
+    while fila:
+        estado, caminho, historico = fila.popleft()
+        estados_visitados += 1
+
+        if estado in visitados:
+            continue
+        visitados.add(estado)
+
+        historico = historico + [estado]
+
+        if estado == OBJETIVO:
+            return caminho, historico, estados_visitados
+
+        for acao, novo_estado in vizinhos(estado):
+            fila.append((novo_estado, caminho + [acao], historico))
+
+    return None, None, estados_visitados
+
+
+def main():
+    print("=== 8 PUZZLE ===\n")
+
+    print("1 - Gerar estado aleatório")
+    print("2 - Inserir manualmente")
+
+    op = input("Opção: ")
+
+    if op == "1":
+        estado_inicial = gerar_estado_valido()
+    else:
+        print("Digite os números de 0 a 8 separados por espaço:")
+        entrada = list(map(int, input().split()))
+        estado_inicial = tuple(entrada)
+
+    print("\nEstado inicial:")
+    imprimir(estado_inicial)
+
+    inicio = time.time()
+    caminho, historico, visitados = bfs(estado_inicial)
+    fim = time.time()
+
+    print("=== RESULTADO ===\n")
+
+    if caminho:
+        print("Movimentos:")
+        print(" -> ".join(caminho))
+
+        print("\nEstados percorridos:")
+        for estado in historico:
+            imprimir(estado)
+
+        print(f"Custo total: {len(caminho)}")
+        print(f"Estados visitados: {visitados}")
+        print(f"Tempo: {fim - inicio:.6f}s")
+    else:
+        print("Sem solução.")
+
+
+if __name__ == "__main__":
+    main()
