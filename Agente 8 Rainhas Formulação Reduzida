@@ -1,0 +1,69 @@
+import random
+import time
+
+class RainhasReducao:
+    def __init__(self, n=8):
+        self.n = n
+        self.tabuleiro = [-1] * n
+        self.estados_visitados = 0
+
+    def seguro(self, linha, coluna):
+        for c in range(coluna):
+            if self.tabuleiro[c] == linha or \
+               abs(self.tabuleiro[c] - linha) == abs(c - coluna):
+                return False
+        return True
+
+    def resolver(self, coluna=0):
+        if coluna == self.n:
+            return True
+
+        self.estados_visitados += 1
+
+        linhas = list(range(self.n))
+        random.shuffle(linhas)
+
+        for linha in linhas:
+            if self.seguro(linha, coluna):
+                self.tabuleiro[coluna] = linha
+
+                if self.resolver(coluna + 1):
+                    return True
+
+                self.tabuleiro[coluna] = -1
+
+        return False
+
+    def imprimir(self):
+        for linha in range(self.n):
+            for col in range(self.n):
+                if self.tabuleiro[col] == linha:
+                    print("Q", end=" ")
+                else:
+                    print(".", end=" ")
+            print()
+
+
+def main():
+    print("=== 8 RAINHAS - FORMULAÇÃO REDUZIDA ===\n")
+
+    n = int(input("Tamanho do tabuleiro (ex: 8): "))
+
+    agente = RainhasReducao(n)
+
+    inicio = time.time()
+    sucesso = agente.resolver()
+    fim = time.time()
+
+    print("\n=== RESULTADO ===")
+
+    if sucesso:
+        agente.imprimir()
+        print(f"\nEstados visitados: {agente.estados_visitados}")
+        print(f"Tempo: {fim - inicio:.6f}s")
+    else:
+        print("Sem solução")
+
+
+if __name__ == "__main__":
+    main()
