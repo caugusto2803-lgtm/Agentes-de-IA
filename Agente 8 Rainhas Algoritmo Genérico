@@ -1,0 +1,74 @@
+import random
+import time
+
+class RainhasGenerico:
+    def __init__(self, n=8):
+        self.n = n
+        self.tabuleiro = [[0]*n for _ in range(n)]
+        self.estados_visitados = 0
+
+    def seguro(self):
+        posicoes = []
+
+        for i in range(self.n):
+            for j in range(self.n):
+                if self.tabuleiro[i][j] == 1:
+                    posicoes.append((i, j))
+
+        if len(posicoes) != self.n:
+            return False
+
+        for i in range(len(posicoes)):
+            for j in range(i+1, len(posicoes)):
+                r1, c1 = posicoes[i]
+                r2, c2 = posicoes[j]
+
+                if r1 == r2 or c1 == c2 or abs(r1 - r2) == abs(c1 - c2):
+                    return False
+
+        return True
+
+    def resolver(self, rainhas_colocadas=0):
+        if rainhas_colocadas == self.n:
+            return self.seguro()
+
+        self.estados_visitados += 1
+
+        posicoes = [(i, j) for i in range(self.n) for j in range(self.n)]
+        random.shuffle(posicoes)
+
+        for i, j in posicoes:
+            if self.tabuleiro[i][j] == 0:
+                self.tabuleiro[i][j] = 1
+
+                if self.resolver(rainhas_colocadas + 1):
+                    return True
+
+                self.tabuleiro[i][j] = 0
+
+        return False
+
+    def imprimir(self):
+        for linha in self.tabuleiro:
+            print(" ".join("Q" if x else "." for x in linha))
+
+
+def main():
+    print("=== 8 RAINHAS - ALGORITMO GENÉRICO ===\n")
+
+    agente = RainhasGenerico()
+
+    inicio = time.time()
+    sucesso = agente.resolver()
+    fim = time.time()
+
+    if sucesso:
+        agente.imprimir()
+        print(f"\nEstados visitados: {agente.estados_visitados}")
+        print(f"Tempo: {fim - inicio:.6f}s")
+    else:
+        print("Sem solução")
+
+
+if __name__ == "__main__":
+    main()
